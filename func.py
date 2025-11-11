@@ -10,13 +10,7 @@ from scipy.optimize import nnls
 
 def extract_envi_info_from_file(file_path):
     """
-    Extract metadata from ENVI header file.
-    
-    Args:
-        file_path: Path to the .hdr file
-        
-    Returns:
-        tuple: (samples, bands, lines, wavelengths)
+    Extract metadata from ENVI header file
     """
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Header file not found: {file_path}")
@@ -39,7 +33,6 @@ def extract_envi_info_from_file(file_path):
     if samples is None or bands is None or lines is None:
         raise ValueError("Could not extract all required dimensions from header file")
     
-    # Extract wavelengths
     wavelengths = re.findall(r'\d+\.\d+', header_text)
     wavelengths = [float(wavelength) for wavelength in wavelengths]
     
@@ -50,19 +43,7 @@ def extract_envi_info_from_file(file_path):
 
 def load_raw_hyperspectral_data(raw_path, hdr_path, wavelengths, bands, lines, samples, crop_region):
     """
-    Load hyperspectral data from ENVI format file.
-    
-    Args:
-        raw_path: Path to the .raw file
-        hdr_path: Path to the .hdr file (for validation)
-        wavelengths: List of wavelengths
-        bands: Number of spectral bands
-        lines: Number of lines (rows)
-        samples: Number of samples (columns)
-        crop_region: Optional tuple (x, y, width, height) for cropping
-        
-    Returns:
-        numpy.ndarray: Hyperspectral data cube of shape (lines, samples, bands)
+    Load hyperspectral data from ENVI format file
     """
     if not os.path.exists(raw_path):
         raise FileNotFoundError(f"Raw file not found: {raw_path}")
@@ -102,13 +83,7 @@ def load_raw_hyperspectral_data(raw_path, hdr_path, wavelengths, bands, lines, s
 
 def plot_abundance_maps(abundance_maps, save_dir=None, base_filename='abundance_map', colormap='viridis'):
     """
-    Plot abundance maps for each endmember.
-    
-    Args:
-        abundance_maps: Array of shape (rows, cols, num_endmembers)
-        save_dir: Directory to save plots (if None, displays plots)
-        base_filename: Base filename for saved plots
-        colormap: Matplotlib colormap name
+    Plot abundance maps for each endmember
     """
     if len(abundance_maps.shape) != 3:
         raise ValueError(f"Expected 3D array, got shape {abundance_maps.shape}")
@@ -148,19 +123,7 @@ def plot_abundance_maps(abundance_maps, save_dir=None, base_filename='abundance_
 
 def Unmix(raw_path, hdr_path, EM_method='NFINDR', q=2, abun_method='FCLSU', crop_region=None, normalize=True):
     """
-    Perform spectral unmixing on hyperspectral images.
-    
-    Args:
-        raw_path: Path to the raw hyperspectral image file (.raw)
-        hdr_path: Path to the ENVI header file (.hdr)
-        EM_method: Endmember extraction method ('NFINDR', 'PPI', 'KMeans')
-        q: Number of endmembers to extract
-        abun_method: Abundance estimation method ('FCLSU', 'NMF')
-        crop_region: Optional tuple (x, y, width, height) for cropping
-        normalize: Whether to normalize data during endmember extraction
-        
-    Returns:
-        numpy.ndarray: Abundance maps of shape (rows, cols, num_endmembers)
+    Perform spectral unmixing on hyperspectral images
     """
     if q < 2:
         raise ValueError("Number of endmembers (q) must be at least 2")

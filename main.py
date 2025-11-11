@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-Main script for spectral unmixing of rock art hyperspectral images.
-"""
-
 import argparse
 import os
 import sys
@@ -50,8 +46,6 @@ Examples:
                        help='Disable normalization')
     
     args = parser.parse_args()
-    
-    # Validate file paths
     if not os.path.exists(args.raw):
         print(f"Error: Raw file not found: {args.raw}")
         sys.exit(1)
@@ -60,7 +54,6 @@ Examples:
         print(f"Error: Header file not found: {args.hdr}")
         sys.exit(1)
     
-    # Prepare crop region
     crop_region = None
     if args.crop:
         if len(args.crop) != 4:
@@ -82,7 +75,7 @@ Examples:
     print("=" * 60)
     
     try:
-        # Perform spectral unmixing
+        # Spectral unmixing
         abundance_maps = Unmix(
             raw_path=args.raw,
             hdr_path=args.hdr,
@@ -93,7 +86,7 @@ Examples:
             normalize=args.normalize
         )
         
-        # Save results if output directory specified
+        # Save results
         if args.output:
             from func import plot_abundance_maps
             os.makedirs(args.output, exist_ok=True)
