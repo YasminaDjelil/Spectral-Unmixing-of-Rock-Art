@@ -18,6 +18,18 @@ This project provides tools for performing spectral unmixing on hyperspectral im
   - Customizable cropping regions
   - Automatic wavelength extraction from headers
 
+## Data
+
+Example hyperspectral data files are available for download:
+- **Download from Google Drive:** [https://drive.google.com/drive/folders/1KznvlzEWtO9sUUro_yWfJw0oKEQAQoHB?usp=sharing](https://drive.google.com/drive/folders/1KznvlzEWtO9sUUro_yWfJw0oKEQAQoHB?usp=sharing)
+
+The dataset includes:
+- `elk-drawing.hdr` - ENVI header file (2 KB)
+- `elk-drawing.png` - Preview image (701 KB)
+- `elk-drawing.raw` - Raw hyperspectral data (170 MB)
+
+**Note:** The `.raw` file is too large for GitHub (exceeds 100MB limit), so it's hosted on Google Drive. Download all three files and place them in the `example_data/` directory to use the example dataset.
+
 ## Installation
 
 1. Install the required dependencies:
