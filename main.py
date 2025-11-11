@@ -75,7 +75,6 @@ Examples:
     print("=" * 60)
     
     try:
-        # Spectral unmixing
         abundance_maps = Unmix(
             raw_path=args.raw,
             hdr_path=args.hdr,
@@ -83,14 +82,11 @@ Examples:
             q=args.q,
             abun_method=args.abun_method,
             crop_region=crop_region,
-            normalize=args.normalize
+            normalize=args.normalize,
+            save_dir=args.output
         )
         
-        # Save results
         if args.output:
-            from func import plot_abundance_maps
-            os.makedirs(args.output, exist_ok=True)
-            plot_abundance_maps(abundance_maps, save_dir=args.output)
             print(f"\nResults saved to: {args.output}")
         
         print("\nSpectral unmixing completed successfully!")

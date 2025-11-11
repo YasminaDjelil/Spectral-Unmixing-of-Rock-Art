@@ -59,7 +59,16 @@ def load_raw_hyperspectral_data(raw_path, hdr_path, wavelengths, bands, lines, s
         raw_data[i, :, :] = band_data
 
     raw_data = np.transpose(raw_data, (1, 2, 0))
+    
+    if raw_data.dtype == np.uint16:
+        raw_data = raw_data.astype(np.float32) / 65535.0
+    elif raw_data.dtype == np.uint8:
+        raw_data = raw_data.astype(np.float32) / 255.0
+    else:
+        raw_data = raw_data.astype(np.float32)
+    
     print("Shape of raw data:", raw_data.shape)
+    print(f"Data type: {raw_data.dtype}, Range: [{np.min(raw_data):.3f}, {np.max(raw_data):.3f}]")
     
     if wavelengths:
         print("Start wavelength =", wavelengths[0])
@@ -81,7 +90,7 @@ def load_raw_hyperspectral_data(raw_path, hdr_path, wavelengths, bands, lines, s
         raw_data = raw_data.reshape(lines, samples, num_bands)
         return raw_data
 
-def plot_abundance_maps(abundance_maps, save_dir=None, base_filename='abundance_map', colormap='viridis'):
+def plot_abundance_maps(abundance_maps, save_dir=None, base_filename='abundance_map', colormap='gray'):
     """
     Plot abundance maps for each endmember
     """
@@ -121,7 +130,7 @@ def plot_abundance_maps(abundance_maps, save_dir=None, base_filename='abundance_
         plt.tight_layout(pad=1)
         plt.show()
 
-def Unmix(raw_path, hdr_path, EM_method='NFINDR', q=2, abun_method='FCLSU', crop_region=None, normalize=True):
+def Unmix(raw_path, hdr_path, EM_method='NFINDR', q=2, abun_method='FCLSU', crop_region=None, normalize=True, save_dir=None):
     """
     Perform spectral unmixing on hyperspectral images
     """
@@ -140,10 +149,11 @@ def Unmix(raw_path, hdr_path, EM_method='NFINDR', q=2, abun_method='FCLSU', crop
     
     # 3: Endmember extraction
     print(f"Extracting {q} endmembers using {EM_method}...")
+    
     if EM_method == 'NFINDR':
         EM_spectra = eea.NFINDR().extract(M=raw_data, q=q, transform=None, maxit=100, normalize=normalize, mask=None)
     elif EM_method == 'PPI':
-        EM_spectra = eea.PPI().extract(M=raw_data, q=q, numSkewers=1000, normalize=normalize, mask=None)
+        EM_spectra = eea.PPI().extract(M=raw_data, q=q, numSkewers=10000, normalize=normalize, mask=None)
     elif EM_method == 'KMeans':
         kmeans = KMeans(n_clusters=q, random_state=0, n_init=10)
         num_rows, num_cols, num_bands = raw_data.shape
@@ -165,32 +175,29 @@ def Unmix(raw_path, hdr_path, EM_method='NFINDR', q=2, abun_method='FCLSU', crop
     num_rows, num_columns, num_bands = raw_data.shape
     reshaped_data = raw_data.reshape(-1, num_bands)
     
-    # Normalize data for better unmixing (if using FCLSU)
-    if abun_method == 'FCLSU' and normalize:
-        data_mean = np.mean(reshaped_data, axis=0)
-        data_std = np.std(reshaped_data, axis=0)
-        reshaped_data_norm = (reshaped_data - data_mean) / (data_std + 1e-10)
-        EM_spectra_norm = (EM_spectra - data_mean) / (data_std + 1e-10)
+    if normalize:
+        data_norms = np.linalg.norm(reshaped_data, axis=1, keepdims=True)
+        data_norms[data_norms == 0] = 1.0
+        reshaped_data_norm = reshaped_data / data_norms
+        
+        EM_norms = np.linalg.norm(EM_spectra, axis=1, keepdims=True)
+        EM_norms[EM_norms == 0] = 1.0
+        EM_spectra_norm = EM_spectra / EM_norms
     else:
         reshaped_data_norm = reshaped_data
         EM_spectra_norm = EM_spectra
     
     if abun_method == 'FCLSU':
-        # Fully Constrained Least Squares Unmixing
-        # Solve: min ||Ax - y||^2 subject to x >= 0 and sum(x) = 1
         A = EM_spectra_norm.T
         num_pixels = reshaped_data_norm.shape[0]
         num_endmembers = EM_spectra_norm.shape[0]
         abundance_maps = np.zeros((num_pixels, num_endmembers))
         
-        # Solve for each pixel using NNLS with sum-to-one constraint
         print("Solving FCLSU for each pixel...")
         for i in range(num_pixels):
             if (i + 1) % 10000 == 0:
                 print(f"  Processing pixel {i+1}/{num_pixels}")
-            # Use NNLS (Non-Negative Least Squares)
             x, _ = nnls(A, reshaped_data_norm[i])
-            # Normalize to sum-to-one constraint
             if np.sum(x) > 0:
                 x = x / np.sum(x)
             abundance_maps[i] = x
@@ -198,17 +205,21 @@ def Unmix(raw_path, hdr_path, EM_method='NFINDR', q=2, abun_method='FCLSU', crop
         abundance_maps = abundance_maps.reshape(num_rows, num_columns, num_endmembers)
 
     elif abun_method == 'NMF':
-        # Non-negative Matrix Factorization (unsupervised method)
         print("Running NMF decomposition...")
-        nmf = NMF(n_components=q, max_iter=600, init='nndsvd', random_state=0)
-        W = nmf.fit_transform(reshaped_data)  # W = abundance maps
-        H = nmf.components_  # H = endmember spectra
+        nmf = NMF(n_components=q, max_iter=1000, init='nndsvd', random_state=0, 
+                  solver='mu', beta_loss='frobenius', alpha=0.0)
+        W = nmf.fit_transform(reshaped_data_norm)
+        H = nmf.components_
         abundance_maps = W.reshape(num_rows, num_columns, -1)
     else:
         raise ValueError(f"Unknown abundance method: {abun_method}")
 
-    # Normalize abundance maps to [0, 1] for visualization
     abundance_maps = np.clip(abundance_maps, 0, 1)
+    
+    pixel_sums = np.sum(abundance_maps, axis=2, keepdims=True)
+    pixel_sums[pixel_sums == 0] = 1.0
+    abundance_maps = abundance_maps / pixel_sums
+    
     min_val = np.min(abundance_maps)
     max_val = np.max(abundance_maps)
     if max_val > min_val:
@@ -218,6 +229,6 @@ def Unmix(raw_path, hdr_path, EM_method='NFINDR', q=2, abun_method='FCLSU', crop
     print(f"Abundance maps shape: {abundance_maps.shape}")
     print(f"Abundance range: [{np.min(abundance_maps):.3f}, {np.max(abundance_maps):.3f}]")
 
-    plot_abundance_maps(abundance_maps)
+    plot_abundance_maps(abundance_maps, save_dir=save_dir)
     
     return abundance_maps
