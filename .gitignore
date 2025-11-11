@@ -34,15 +34,15 @@ ENV/
 *~
 
 # Project specific
-results/
-output/
-*.png
+# results/  # Allow results/ directory
+# output/
+# *.png  # Allow PNG files
 *.jpg
 *.jpeg
-*.tif
-*.tiff
-*.raw
-*.hdr
+# *.tif
+# *.tiff
+example_data/*.raw  # Exclude large .raw files (use Git LFS if needed)
+# *.hdr  # Allow .hdr files in example_data
 *.hdf
 *.h5
 
