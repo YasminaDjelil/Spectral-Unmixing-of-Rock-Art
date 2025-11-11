@@ -30,17 +30,30 @@ The dataset includes:
 
 ## Installation
 
+### Using Pixi (Recommended)
+
+1. Install pixi if you haven't already [pixi.sh/latest/installation/](HERE)
+
+2. Install dependencies and activate the environment:
+```bash
+pixi install
+pixi shell
+```
+
+3. Run the spectral unmixing inside the pixi environement:
+```bash
+pixi run python main.py --raw path/to/image.raw --hdr path/to/image.hdr --q 2
+```
+
+### Using pip (Alternative)
+
 1. Install the required dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-**Note:** GDAL installation might require additional system dependencies. On Ubuntu/Debian:
-```bash
-sudo apt-get install gdal-bin libgdal-dev
-pip install GDAL
-```
+**Note:** GDAL installation might require additional system dependencies. On Ubuntu/Debian
 
 ## Usage
 
