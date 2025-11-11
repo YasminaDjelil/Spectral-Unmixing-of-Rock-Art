@@ -131,7 +131,9 @@ The script generates abundance maps for each endmember, showing:
 
 ## References
 
-- Spectral unmixing theory and applications
-- ENVI format specification
-- pysptools documentation for endmember extraction algorithms
+Keshava, N. (2003). A Survey of Spectral Unmixing Algorithms. *Lincoln Laboratory Journal*, 14, 55-78.
+
+Djelil, Y. F. (2024). *Spectral Unmixing of Rock Art Hyperspectral Images* [Master's thesis, University of Eastern Finland]. UEF eRepository. https://erepo.uef.fi/items/945f5642-6494-4af9-a0c2-3d9f16266222
+
+Therien, C. (2013-2018). PySptools: Endmembers Extraction Algorithms (EEA). https://pysptools.sourceforge.io/eea.html
 
